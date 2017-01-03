@@ -1,0 +1,8 @@
+/.vs/WardenSigning/v14/.suo
+/*.db
+/WardenSigning/*.user
+/Debug
+/x64/Debug
+/WardenSigning/x64/Debug
+/WardenSigning/Debug
+/*.opendb
