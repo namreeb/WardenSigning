@@ -18,6 +18,8 @@ public:
     void Update(const std::uint8_t *data, size_t size);
     void Update(const char *string);
 
+    void BuildFingerprint(const std::uint8_t *modulus, const std::uint8_t *exponent, std::vector<std::uint8_t> &out);
+
     bool Verify(const std::uint8_t *modulus, const std::uint8_t *exponent);
 
     const std::uint32_t modulusSize;

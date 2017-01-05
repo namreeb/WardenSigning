@@ -8,6 +8,9 @@
 #include <cstring>
 #include <iostream>
 
+#include <iostream>
+#include <iomanip>
+
 #pragma comment(lib, "libcrypto.lib")
 
 SSignatureData::SSignatureData(std::uint32_t modulusSize, std::uint32_t exponentSize) :
@@ -62,7 +65,46 @@ void SSignatureData::Update(const char* string)
     Update(reinterpret_cast<const std::uint8_t *>(string), strlen(string));
 }
 
-bool SSignatureData::Verify(const std::uint8_t* modulus, const std::uint8_t* exponent)
+void SSignatureData::BuildFingerprint(const std::uint8_t *modulus, const std::uint8_t *exponent, std::vector<std::uint8_t> &out)
+{
+    out.clear();
+    out.resize(ModulusSize + ExponentSize);
+
+    *reinterpret_cast<std::uint32_t *>(&out[0]) = Signature;
+
+    std::vector<std::uint8_t> generated(modulusSize, 0xBB);
+    generated[generated.size() - 1] = 0x0B;     // most significant 
+
+    SHA1_Final(&generated[0], &sha);
+
+    std::cout << "generated: 0x";
+    for (auto i = generated.size() - 1; true; --i)
+    {
+        std::cout << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)generated[i];
+
+        if (!i)
+            break;
+    }
+
+    std::cout << std::endl;
+
+    CryptRSA encoder(modulus, modulusSize, exponent, exponentSize);
+
+    // we want to produce a BIGNUM 'a' which satisfies:
+    // generated = a^exponent % modulus
+
+    // the easiest way to do this is to compute 'a' which satisfies:
+    // generated = a^exponent
+    
+    // 'exponent' in this case is relatively small, with a value of: 0x10001 (65537)
+
+    // the laws of logarithms tell us:
+    // log b^a = a * log(b) ... therefore:
+    // log a^exponent = exponent * log(a) = log(generated) ... therefore
+    // log(a) = log(generated) / exponent
+}
+
+bool SSignatureData::Verify(const std::uint8_t *modulus, const std::uint8_t *exponent)
 {
     if (!modulus)
         throw std::runtime_error("modulus == nullptr");
@@ -84,6 +126,7 @@ bool SSignatureData::Verify(const std::uint8_t* modulus, const std::uint8_t* exp
     if (generated.size() < SHA_DIGEST_LENGTH)
         throw std::runtime_error("Fingerprint was too small");
 
+    // note that at this point, the current contents of magicBuffer (the fingerprint) have NOT been (and WILL NOT be) hashed!
     SHA1_Final(&generated[0], &sha);
 
     CryptRSA decoder(modulus, modulusSize, exponent, exponentSize);

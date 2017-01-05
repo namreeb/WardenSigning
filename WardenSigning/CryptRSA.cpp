@@ -4,10 +4,10 @@
 
 #include <cstdint>
 #include <vector>
-#include <iostream>
 #include <exception>
 #include <algorithm>
 #include <iterator>
+#include <iostream>
 
 namespace
 {
@@ -28,6 +28,9 @@ void WOW_BN_bn2bin(CryptRSA::PBIGNUM &bn, std::vector<std::uint8_t> &out)
     out.clear();
     out.resize(BN_num_bytes(bn.get()), 0);
 
+    if (!out.size())
+        throw std::runtime_error("WOW_BN_bn2bin attempted to convert empty BIGNUM");
+
     BN_bn2bin(bn.get(), &out[0]);
 
     std::reverse(out.begin(), out.end());
@@ -39,6 +42,8 @@ CryptRSA::CryptRSA(const std::uint8_t* modulus, size_t modulusSize, const std::u
 {
     WOW_BN_bin2bn(modulus, modulusSize, this->modulus);
     WOW_BN_bin2bn(exponent, exponentSize, this->exponent);
+
+    std::cout << "exponent: 0x" << BN_bn2hex(this->exponent.get()) << std::endl;
 }
 
 void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uint8_t> &out) const
