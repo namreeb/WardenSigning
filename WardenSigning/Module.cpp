@@ -13,7 +13,7 @@ Module::Module(std::string const &binary, std::string const &key)
     if (b.tellg() < SignatureSize + 4)
         throw std::runtime_error("Warden module too small.  Must be at least 264 bytes.");
 
-    std::vector<std::uint8_t> encrypted(b.tellg());
+    std::vector<std::uint8_t> encrypted(static_cast<size_t>(b.tellg()));
     b.seekg(0, std::ios::beg);
 
     if (!b.read(reinterpret_cast<char *>(&encrypted[0]), encrypted.size()))
