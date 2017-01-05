@@ -58,3 +58,12 @@ void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uin
 
     WOW_BN_bn2bin(dst, out);
 }
+
+bool CryptRSA::CheckGenerated(std::vector<std::uint8_t> const &generated) const
+{
+    PBIGNUM bn_generated(::BN_new(), &::BN_free);
+
+    WOW_BN_bin2bn(&generated[0], generated.size(), bn_generated);
+
+    return BN_cmp(bn_generated.get(), this->modulus.get()) == -1;
+}

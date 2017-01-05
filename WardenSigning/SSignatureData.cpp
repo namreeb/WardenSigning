@@ -8,9 +8,6 @@
 #include <cstring>
 #include <iostream>
 
-#include <iostream>
-#include <iomanip>
-
 #pragma comment(lib, "libcrypto.lib")
 
 SSignatureData::SSignatureData(std::uint32_t modulusSize, std::uint32_t exponentSize) :
@@ -77,17 +74,6 @@ void SSignatureData::BuildFingerprint(const std::uint8_t *modulus, const std::ui
 
     SHA1_Final(&generated[0], &sha);
 
-    std::cout << "generated: 0x";
-    for (auto i = generated.size() - 1; true; --i)
-    {
-        std::cout << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)generated[i];
-
-        if (!i)
-            break;
-    }
-
-    std::cout << std::endl;
-
     CryptRSA encoder(modulus, modulusSize, exponent, exponentSize);
 
     // we want to produce a BIGNUM 'a' which satisfies:
@@ -95,6 +81,9 @@ void SSignatureData::BuildFingerprint(const std::uint8_t *modulus, const std::ui
 
     // the easiest way to do this is to compute 'a' which satisfies:
     // generated = a^exponent
+    // but this only works when generated < modulus, so let's check that:
+
+    std::cout << "generated < modulus? " << (encoder.CheckGenerated(generated) ? "true" : "false") << std::endl;
     
     // 'exponent' in this case is relatively small, with a value of: 0x10001 (65537)
 
