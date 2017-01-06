@@ -12,8 +12,7 @@ private:
 
 public:
     Module(std::string const &binary, std::string const &key);
-
-
+    
     size_t decompressedSize;
     std::vector<std::uint8_t> m_binary;
     std::vector<std::uint8_t> m_signature;

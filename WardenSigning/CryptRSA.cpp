@@ -42,28 +42,26 @@ CryptRSA::CryptRSA(const std::uint8_t* modulus, size_t modulusSize, const std::u
 {
     WOW_BN_bin2bn(modulus, modulusSize, this->modulus);
     WOW_BN_bin2bn(exponent, exponentSize, this->exponent);
-
-    std::cout << "exponent: 0x" << BN_bn2hex(this->exponent.get()) << std::endl;
 }
 
-void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uint8_t> &out) const
+void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uint8_t> &out, const std::vector<std::uint8_t> &generated) const
 {
+    std::unique_ptr<BN_CTX, decltype(&::BN_CTX_free)> ctx(::BN_CTX_new(), &::BN_CTX_free);
+
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> src(::BN_new(), &::BN_free);
     WOW_BN_bin2bn(&in[0], in.size(), src);
 
-    std::unique_ptr<BN_CTX, decltype(&::BN_CTX_free)> ctx(::BN_CTX_new(), &::BN_CTX_free);
+    std::cout << "a is " << BN_num_bits(src.get()) << " bits" << std::endl;
+    std::cout << "a is " << (BN_is_prime(src.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
+
+    std::cout << "exponent is " << BN_num_bits(this->exponent.get()) << " bits" << std::endl;
+    std::cout << "exponent is " << (BN_is_prime(this->exponent.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
+
+    std::cout << "m is " << BN_num_bits(this->modulus.get()) << " bits" << std::endl;
+    std::cout << "m is " << (BN_is_prime(this->modulus.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
 
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> dst(::BN_new(), &::BN_free);
     BN_mod_exp(dst.get(), src.get(), exponent.get(), modulus.get(), ctx.get());
 
     WOW_BN_bn2bin(dst, out);
-}
-
-bool CryptRSA::CheckGenerated(std::vector<std::uint8_t> const &generated) const
-{
-    PBIGNUM bn_generated(::BN_new(), &::BN_free);
-
-    WOW_BN_bin2bn(&generated[0], generated.size(), bn_generated);
-
-    return BN_cmp(bn_generated.get(), this->modulus.get()) == -1;
 }

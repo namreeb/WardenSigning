@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
             else
                 std::cout << "Module fingerprint check FAILED!" << std::endl;
         }
-        // dll signing mode?
+        // dll signing mode.  currently does not work (and wont until someone can crack RSA 2048 \o/)
         else if (vm.count("dll") && !vm.count("binary") && !vm.count("key"))
         {
             std::cout << "Signing binary " << dll << "..." << std::endl;
