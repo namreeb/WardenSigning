@@ -71,10 +71,7 @@ void SSignatureData::BuildFingerprint(const std::uint8_t *modulus, const std::ui
 
     CryptRSA encoder(modulus, modulusSize, exponent, exponentSize);
 
-    // we want to produce a BIGNUM 'a' which satisfies:
-    // generated = a^exponent % modulus
-
-    // to future readers, good luck with that! trololol
+    encoder.Sign(generated);
 
     out.clear();
     out.resize(ModulusSize + ExponentSize);
@@ -113,7 +110,7 @@ bool SSignatureData::Verify(const std::uint8_t *modulus, const std::uint8_t *exp
     memcpy(&stored[0], &magicBuffer[sizeof(std::uint32_t)], stored.size()); // offset 4 bytes into magicBuffer to skip signature
 
     std::vector<std::uint8_t> computed;
-    decoder.Process(stored, computed, generated);
+    decoder.Process(stored, computed);
 
     return !memcmp(&generated[0], &computed[0], generated.size());
 }

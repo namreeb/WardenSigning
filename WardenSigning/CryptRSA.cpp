@@ -38,30 +38,42 @@ void WOW_BN_bn2bin(CryptRSA::PBIGNUM &bn, std::vector<std::uint8_t> &out)
 }
 
 CryptRSA::CryptRSA(const std::uint8_t* modulus, size_t modulusSize, const std::uint8_t* exponent, size_t exponentSize) :
-    modulus(::BN_new(), &::BN_free), exponent(::BN_new(), &::BN_free)
+    ctx(::BN_CTX_new(), &::BN_CTX_free), n(::BN_new(), &::BN_free), e(::BN_new(), &::BN_free)
 {
-    WOW_BN_bin2bn(modulus, modulusSize, this->modulus);
-    WOW_BN_bin2bn(exponent, exponentSize, this->exponent);
+    WOW_BN_bin2bn(modulus, modulusSize, n);
+    WOW_BN_bin2bn(exponent, exponentSize, e);
 }
 
-void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uint8_t> &out, const std::vector<std::uint8_t> &generated) const
+void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uint8_t> &out) const
 {
-    std::unique_ptr<BN_CTX, decltype(&::BN_CTX_free)> ctx(::BN_CTX_new(), &::BN_CTX_free);
+    std::unique_ptr<BIGNUM, decltype(&::BN_free)> m(::BN_new(), &::BN_free);
+    WOW_BN_bin2bn(&in[0], in.size(), m);
 
-    std::unique_ptr<BIGNUM, decltype(&::BN_free)> src(::BN_new(), &::BN_free);
-    WOW_BN_bin2bn(&in[0], in.size(), src);
+    std::cout << "m is " << BN_num_bits(m.get()) << " bits" << std::endl;
+    std::cout << "m is " << (BN_is_prime(m.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
 
-    std::cout << "a is " << BN_num_bits(src.get()) << " bits" << std::endl;
-    std::cout << "a is " << (BN_is_prime(src.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
+    std::cout << "e is " << BN_num_bits(e.get()) << " bits" << std::endl;
+    std::cout << "e is " << (BN_is_prime(e.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
 
-    std::cout << "exponent is " << BN_num_bits(this->exponent.get()) << " bits" << std::endl;
-    std::cout << "exponent is " << (BN_is_prime(this->exponent.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
-
-    std::cout << "m is " << BN_num_bits(this->modulus.get()) << " bits" << std::endl;
-    std::cout << "m is " << (BN_is_prime(this->modulus.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
+    std::cout << "n is " << BN_num_bits(n.get()) << " bits" << std::endl;
+    std::cout << "n is " << (BN_is_prime(n.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
 
     std::unique_ptr<BIGNUM, decltype(&::BN_free)> dst(::BN_new(), &::BN_free);
-    BN_mod_exp(dst.get(), src.get(), exponent.get(), modulus.get(), ctx.get());
+    BN_mod_exp(dst.get(), m.get(), e.get(), n.get(), ctx.get());
 
     WOW_BN_bn2bin(dst, out);
+}
+
+void CryptRSA::Sign(const std::vector<std::uint8_t> &generated) const
+{
+    // we want to produce an integer 'm' which satisfies:
+    // m^e % n = generated
+
+    // to future readers, good luck with that! trololol
+
+    std::cout << "e is " << BN_num_bits(e.get()) << " bits" << std::endl;
+    std::cout << "e is " << (BN_is_prime(e.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
+
+    std::cout << "n is " << BN_num_bits(n.get()) << " bits" << std::endl;
+    std::cout << "n is " << (BN_is_prime(n.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
 }
