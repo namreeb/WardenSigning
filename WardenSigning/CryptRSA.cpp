@@ -94,7 +94,6 @@ void CryptRSA::Analyze(const std::vector<std::uint8_t> &generated, std::vector<s
     std::vector<std::uint8_t> dbytes;
     
     std::cout << "n' is " << BN_num_bits(nPrime.get()) << " bits" << std::endl;
-    std::cout << "n' is " << (BN_is_prime(nPrime.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
 
     std::cout << "resolving n' took " << (stop - start) << " seconds" << std::endl;
 
