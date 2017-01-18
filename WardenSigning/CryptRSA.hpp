@@ -25,7 +25,7 @@ public:
     void Process(const std::vector<std::uint8_t> &in, std::vector<std::uint8_t> &out);
 
     // analyze a correct signature to output hopefully useful information
-    void Analyze(const std::vector<std::uint8_t> &generated, std::vector<std::uint8_t> &d) const;
+    void Analyze(const std::vector<std::uint8_t> &generated, std::vector<std::uint8_t> &nprime) const;
 
     // sign an arbitrary block of data
     void Sign(const std::vector<std::uint8_t> &generated) const;

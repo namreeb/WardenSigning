@@ -64,43 +64,43 @@ void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uin
     WOW_BN_bn2bin(dst, out);
 }
 
-void CryptRSA::Analyze(const std::vector<std::uint8_t> &generated, std::vector<std::uint8_t> &dout) const
+void CryptRSA::Analyze(const std::vector<std::uint8_t> &generated, std::vector<std::uint8_t> &nprime) const
 {
     if (!m)
         throw std::runtime_error("m has not yet been calculated");
 
-    // in CryptRSA::Sign() it is explained that for a validated module, the following expression is true for an unknown integer d:
-    // m^e = n * d + generated
+    // in CryptRSA::Sign() it is explained that for a validated module, the following expression is true for an unknown integer n':
+    // m^e = n * n' + generated
 
-    // the same expression, rewritten to isolate d:
-    // d = (m^e - generated) / n
+    // the same expression, rewritten to isolate n':
+    // n' = (m^e - generated) / n
 
-    // compute d for the current context
+    // compute n' for the current context
 
     PBIGNUM g(::BN_new(), &::BN_free);
 
     WOW_BN_bin2bn(&generated[0], generated.size(), g);
 
-    PBIGNUM d(::BN_new(), &::BN_free);
+    PBIGNUM nPrime(::BN_new(), &::BN_free);
 
     auto const start = time(nullptr);
 
-    BN_exp(d.get(), m.get(), e.get(), ctx.get());
-    BN_sub(d.get(), d.get(), g.get());
-    BN_div(d.get(), nullptr, d.get(), n.get(), ctx.get());
+    BN_exp(nPrime.get(), m.get(), e.get(), ctx.get());
+    BN_sub(nPrime.get(), nPrime.get(), g.get());
+    BN_div(nPrime.get(), nullptr, nPrime.get(), n.get(), ctx.get());
 
     auto const stop = time(nullptr);
 
     std::vector<std::uint8_t> dbytes;
     
-    std::cout << "d is " << BN_num_bits(d.get()) << " bits" << std::endl;
-    std::cout << "d is " << (BN_is_prime(d.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
+    std::cout << "n' is " << BN_num_bits(nPrime.get()) << " bits" << std::endl;
+    std::cout << "n' is " << (BN_is_prime(nPrime.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
 
-    std::cout << "resolving d took " << (stop - start) << " seconds" << std::endl;
+    std::cout << "resolving n' took " << (stop - start) << " seconds" << std::endl;
 
-    dout.clear();
-    dout.resize(BN_num_bytes(d.get()));
-    BN_bn2bin(d.get(), &dout[0]);
+    nprime.clear();
+    nprime.resize(BN_num_bytes(nPrime.get()));
+    BN_bn2bin(nPrime.get(), &nprime[0]);
 }
 
 void CryptRSA::Sign(const std::vector<std::uint8_t> &generated) const
