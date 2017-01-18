@@ -79,7 +79,7 @@ void SSignatureData::BuildFingerprint(const std::uint8_t *modulus, const std::ui
     *reinterpret_cast<std::uint32_t *>(&out[0]) = Signature;
 }
 
-bool SSignatureData::Verify(const std::uint8_t *modulus, const std::uint8_t *exponent)
+bool SSignatureData::Verify(const std::uint8_t *modulus, const std::uint8_t *exponent, bool analyze)
 {
     if (!modulus)
         throw std::runtime_error("modulus == nullptr");
@@ -111,6 +111,12 @@ bool SSignatureData::Verify(const std::uint8_t *modulus, const std::uint8_t *exp
 
     std::vector<std::uint8_t> computed;
     decoder.Process(stored, computed);
+
+    if (analyze)
+    {
+        std::vector<std::uint8_t> d;
+        decoder.Analyze(generated, d);
+    }
 
     return !memcmp(&generated[0], &computed[0], generated.size());
 }

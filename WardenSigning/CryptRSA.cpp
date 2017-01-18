@@ -38,15 +38,15 @@ void WOW_BN_bn2bin(CryptRSA::PBIGNUM &bn, std::vector<std::uint8_t> &out)
 }
 
 CryptRSA::CryptRSA(const std::uint8_t* modulus, size_t modulusSize, const std::uint8_t* exponent, size_t exponentSize) :
-    ctx(::BN_CTX_new(), &::BN_CTX_free), n(::BN_new(), &::BN_free), e(::BN_new(), &::BN_free)
+    ctx(::BN_CTX_new(), &::BN_CTX_free), m(nullptr, &::BN_free), n(::BN_new(), &::BN_free), e(::BN_new(), &::BN_free)
 {
     WOW_BN_bin2bn(modulus, modulusSize, n);
     WOW_BN_bin2bn(exponent, exponentSize, e);
 }
 
-void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uint8_t> &out) const
+void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uint8_t> &out)
 {
-    std::unique_ptr<BIGNUM, decltype(&::BN_free)> m(::BN_new(), &::BN_free);
+    m.reset(::BN_new());
     WOW_BN_bin2bn(&in[0], in.size(), m);
 
     std::cout << "m is " << BN_num_bits(m.get()) << " bits" << std::endl;
@@ -64,12 +64,59 @@ void CryptRSA::Process(const std::vector<std::uint8_t> &in, std::vector<std::uin
     WOW_BN_bn2bin(dst, out);
 }
 
+void CryptRSA::Analyze(const std::vector<std::uint8_t> &generated, std::vector<std::uint8_t> &dout) const
+{
+    if (!m)
+        throw std::runtime_error("m has not yet been calculated");
+
+    // in CryptRSA::Sign() it is explained that for a validated module, the following expression is true for an unknown integer d:
+    // m^e = n * d + generated
+
+    // the same expression, rewritten to isolate d:
+    // d = (m^e - generated) / n
+
+    // compute d for the current context
+
+    PBIGNUM g(::BN_new(), &::BN_free);
+
+    WOW_BN_bin2bn(&generated[0], generated.size(), g);
+
+    PBIGNUM d(::BN_new(), &::BN_free);
+
+    auto const start = time(nullptr);
+
+    BN_exp(d.get(), m.get(), e.get(), ctx.get());
+    BN_sub(d.get(), d.get(), g.get());
+    BN_div(d.get(), nullptr, d.get(), n.get(), ctx.get());
+
+    auto const stop = time(nullptr);
+
+    std::vector<std::uint8_t> dbytes;
+    
+    std::cout << "d is " << BN_num_bits(d.get()) << " bits" << std::endl;
+    std::cout << "d is " << (BN_is_prime(d.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;
+
+    std::cout << "resolving d took " << (stop - start) << " seconds" << std::endl;
+
+    dout.clear();
+    dout.resize(BN_num_bytes(d.get()));
+    BN_bn2bin(d.get(), &dout[0]);
+}
+
 void CryptRSA::Sign(const std::vector<std::uint8_t> &generated) const
 {
-    // we want to produce an integer 'm' which satisfies:
+    // to sign our own modules, we need to produce an integer 'm' which satisfies:
     // m^e % n = generated
 
-    // to future readers, good luck with that! trololol
+    // e and n are hard-coded into the client, and therefore fixed across all warden modules
+
+    // it can be said that if a % b = c, we know there exists an integer d where:
+    // a = b * d + c
+
+    // applying this to our situation, we know there exists an integer d where:
+    // m^e = n * d + generated
+
+    // to future readers, good luck with this! trololol
 
     std::cout << "e is " << BN_num_bits(e.get()) << " bits" << std::endl;
     std::cout << "e is " << (BN_is_prime(e.get(), BN_prime_checks, nullptr, ctx.get(), nullptr) ? "" : "NOT ") << "prime" << std::endl;

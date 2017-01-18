@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
     desc.add_options()
         ("binary,b", boost::program_options::value<std::string>(&binary),   "binary file")
         ("key,k", boost::program_options::value<std::string>(&key),         "key file")
+        ("analyze,a",                                                       "analyze the specified module")
         ("dll,d", boost::program_options::value<std::string>(&dll),         "dll file to sign")
         ("help,h",                                                          "display help message");
 
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
             signatureData.Update("MAIEV.MOD");
             signatureData.Update(&module.m_signature[0], module.m_signature.size());
 
-            if (signatureData.Verify(wardenModulus, wardenExponent))
+            if (signatureData.Verify(wardenModulus, wardenExponent, !!vm.count("analyze")))
                 std::cout << "Module VERIFIED" << std::endl;
             else
                 std::cout << "Module fingerprint check FAILED!" << std::endl;
@@ -107,7 +108,7 @@ int main(int argc, char *argv[])
 
             signatureData.Update(&fingerprint[0], fingerprint.size());
 
-            if (signatureData.Verify(wardenModulus, wardenExponent))
+            if (signatureData.Verify(wardenModulus, wardenExponent, false))
                 std::cout << "Module VERIFIED" << std::endl;
             else
                 std::cout << "Module fingerprint check FAILED!" << std::endl;

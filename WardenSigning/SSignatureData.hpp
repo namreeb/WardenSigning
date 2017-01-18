@@ -20,7 +20,7 @@ public:
 
     void BuildFingerprint(const std::uint8_t *modulus, const std::uint8_t *exponent, std::vector<std::uint8_t> &out);
 
-    bool Verify(const std::uint8_t *modulus, const std::uint8_t *exponent);
+    bool Verify(const std::uint8_t *modulus, const std::uint8_t *exponent, bool analyze);
 
     const std::uint32_t modulusSize;
     const std::uint32_t exponentSize;
