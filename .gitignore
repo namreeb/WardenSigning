@@ -6,3 +6,5 @@
 /WardenSigning/x64/Debug
 /WardenSigning/Debug
 /*.opendb
+/x64/Release
+/WardenSigning/x64/Release
