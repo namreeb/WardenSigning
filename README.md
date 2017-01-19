@@ -14,13 +14,15 @@ It requires OpenSSL.
 Example output of the module verification mode:
 
 ```
-Loaded module.  Decompressed size = 29760 bytes.
+Loaded module.  Decompressed size = 30469 bytes.
 Signature check PASSED
-a is 2048 bits
-a is NOT prime
-exponent is 17 bits
-exponent is prime
 m is 2048 bits
 m is NOT prime
+e is 17 bits
+e is prime
+n is 2048 bits
+n is NOT prime
+n' is 134176848 bits
+resolving n' took 1159 seconds
 Module VERIFIED
 ```
